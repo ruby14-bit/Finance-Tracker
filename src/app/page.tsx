@@ -31,7 +31,6 @@ export default function Dashboard() {
     setLoading(false)
   }, [supabase])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const channel = supabase
       .channel('realtime-transactions')
