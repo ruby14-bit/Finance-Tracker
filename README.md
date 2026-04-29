@@ -1,6 +1,6 @@
 # 💜 Wallet Glow
 
-> A beautiful, real-time personal finance tracker with M-Pesa integration — built for Kenya.
+> A beautiful, real-time personal finance tracker with M-Pesa integration  built for Kenya.
 
 ## ✨ Features
 
