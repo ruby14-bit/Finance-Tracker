@@ -26,7 +26,7 @@ export default function SpendingChart({ transactions }: SpendingChartProps) {
   const COLORS = ['#d946ef', '#ec4899', '#8b5cf6', '#a855f7', '#f43f5e']
 
   return (
-    <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-xl shadow-slate-200/40 transition-all duration-500 p-8 w-full">
+    <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-xl shadow-slate-200/40 transition-all duration-500 p-4 md:p-8 w-full">
       <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6 text-center">
         Expense Breakdown
       </p>

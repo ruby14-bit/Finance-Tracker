@@ -31,8 +31,19 @@ export default function Dashboard() {
     setLoading(false)
   }, [supabase])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | undefined;
+    const channel = supabase
+      .channel('realtime-transactions')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          console.log('Database updated, fetching new transactions...')
+          fetchTransactions()
+        }
+      )
+      .subscribe()
 
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -41,28 +52,12 @@ export default function Dashboard() {
       } else {
         setUser(user)
         fetchTransactions()
-
-        // --- ADDED REALTIME LISTENER FOR M-PESA REFLECTION ---
-        channel = supabase
-          .channel('realtime-transactions')
-          .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'transactions' },
-            () => {
-              console.log('Database updated, fetching new transactions...')
-              fetchTransactions() // Instantly refresh UI when M-Pesa hits DB
-            }
-          )
-          .subscribe()
       }
     }
     checkUser()
 
-    // Cleanup the listener when the component unmounts
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel)
-      }
+      supabase.removeChannel(channel)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchTransactions])
@@ -161,7 +156,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         
         {/* HEADER */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 gap-4 md:gap-6">
           <div>
             <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-pink-500 to-rose-400 tracking-tight">
               Wallet Glow
@@ -171,11 +166,11 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="grid grid-cols-2 md:flex md:items-center gap-2 md:gap-4 w-full md:w-auto">
             <button 
               onClick={handleMpesaSync}
               disabled={syncing}
-              className={`group flex items-center gap-2 bg-emerald-500 text-white px-6 py-2.5 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-200/50 font-bold text-sm ${syncing ? 'animate-pulse opacity-70' : 'hover:scale-105 active:scale-95'}`}
+              className={`group flex items-center justify-center gap-2 bg-emerald-500 text-white px-4 py-2.5 rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-200/50 font-bold text-xs md:text-sm ${syncing ? 'animate-pulse opacity-70' : 'hover:scale-105 active:scale-95'}`}
             >
               <div className={`w-2 h-2 bg-white rounded-full ${syncing ? 'animate-ping' : ''}`}></div>
               {syncing ? 'Connecting...' : 'Sync Live M-Pesa'}
@@ -185,7 +180,7 @@ export default function Dashboard() {
             <button
               onClick={handleWithdraw}
               disabled={withdrawing}
-              className={`group flex items-center gap-2 bg-purple-500 text-white px-6 py-2.5 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-200/50 font-bold text-sm ${withdrawing ? 'animate-pulse opacity-70' : 'hover:scale-105 active:scale-95'}`}
+              className={`group flex items-center justify-center gap-2 bg-purple-500 text-white px-4 py-2.5 rounded-2xl transition-all duration-300 shadow-lg shadow-purple-200/50 font-bold text-xs md:text-sm ${withdrawing ? 'animate-pulse opacity-70' : 'hover:scale-105 active:scale-95'}`}
             >
               <div className={`w-2 h-2 bg-white rounded-full ${withdrawing ? 'animate-ping' : ''}`}></div>
               {withdrawing ? 'Processing...' : 'Withdraw to M-Pesa'}
@@ -193,7 +188,7 @@ export default function Dashboard() {
 
             <button 
               onClick={handleLogout} 
-              className="group flex items-center gap-2 bg-white/40 backdrop-blur-md text-slate-600 border border-white/40 px-6 py-2.5 rounded-2xl hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 shadow-sm font-bold text-sm"
+              className="col-span-2 md:col-span-1 group flex items-center justify-center gap-2 bg-white/40 backdrop-blur-md text-slate-600 border border-white/40 px-4 py-2.5 rounded-2xl hover:bg-rose-50 hover:text-rose-600 transition-all duration-300 shadow-sm font-bold text-xs md:text-sm"
             >
               Logout
             </button>
@@ -207,7 +202,7 @@ export default function Dashboard() {
             <div className="relative overflow-hidden group bg-gradient-to-br from-purple-600 to-pink-500 p-8 rounded-[2.5rem] shadow-2xl shadow-purple-200/50 text-white transition-all duration-500">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
               <p className="text-purple-100 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Current Balance</p>
-              <p className="text-4xl font-black mt-4 tracking-tighter">
+              <p className="text-3xl md:text-4xl font-black mt-4 tracking-tighter">
                 Ksh {totalBalance.toLocaleString('en-KE', { minimumFractionDigits: 2 })}
               </p>
               <div className="mt-6">
@@ -230,7 +225,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <SpendingChart transactions={transactions} />
               
-              <div className={`${glassClass} p-8 flex flex-col justify-center relative overflow-hidden`}>
+              <div className={`${glassClass} p-4 md:p-8 flex flex-col justify-center relative overflow-hidden`}>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-4">Insight</p>
                 <h4 className="text-xl font-bold text-slate-800 leading-tight">
                   Your largest expense this week was <br />
@@ -242,9 +237,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className={`${glassClass} p-8`}>
+            <div className={`${glassClass} p-4 md:p-8`}>
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-black text-slate-800 tracking-tight">Recent Activity</h3>
+                <h3 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">Recent Activity</h3>
                 <div className="w-10 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
               </div>
 
@@ -257,24 +252,24 @@ export default function Dashboard() {
                   transactions.map((t) => (
                     <div 
                       key={t.id} 
-                      className="group flex justify-between items-center p-5 bg-white/30 hover:bg-white/70 rounded-[1.8rem] transition-all duration-300 border border-transparent hover:border-white hover:shadow-lg"
+                      className="group flex justify-between items-center p-3 md:p-5 bg-white/30 hover:bg-white/70 rounded-[1.8rem] transition-all duration-300 border border-transparent hover:border-white hover:shadow-lg gap-2"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="grid grid-cols-2 md:flex md:items-center gap-2 md:gap-4 w-full md:w-auto">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg ${
                           t.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'
                         }`}>
                           {t.description?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 capitalize tracking-tight">{t.description || 'Untitled'}</p>
+                          <p className="font-bold text-slate-800 capitalize tracking-tight text-sm md:text-base truncate max-w-[100px] md:max-w-none">{t.description || 'Untitled'}</p>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-6">
-                        <p className={`text-lg font-black tracking-tighter ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-900'}`}>
+                        <p className={`text-sm md:text-lg font-black tracking-tighter shrink-0 ${t.type === 'income' ? 'text-emerald-500' : 'text-slate-900'}`}>
                           {t.type === 'income' ? '+' : '-'} Ksh {Number(t.amount).toFixed(2)}
                         </p>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           <button onClick={() => setEditingTransaction(t)} className="text-purple-600 text-[10px] font-black uppercase">Edit</button>
                           <button onClick={() => handleDelete(t.id)} className="text-rose-400 text-[10px] font-black uppercase">Del</button>
                         </div>

@@ -65,7 +65,7 @@ export default function TransactionForm({ onSuccess, initialData, onCancelEdit }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-8 space-y-5">
+    <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-5">
       <div className="flex p-1 bg-slate-100/50 rounded-2xl">
         {(['expense', 'income'] as const).map((t) => (
           <button key={t} type="button" onClick={() => setType(t)}
