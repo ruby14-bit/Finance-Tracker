@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
   try {
     const { amount, phone, userId } = await req.json();
+    if (!amount || !phone || !userId) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     
     const auth = Buffer.from(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`).toString('base64');
     const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to initiate push' }, { status: 500 });
   }
 }

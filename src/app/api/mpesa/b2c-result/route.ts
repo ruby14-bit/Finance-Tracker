@@ -18,10 +18,10 @@ export async function POST(request: Request) {
     const resultCode = result?.ResultCode
 
     if (resultCode === 0 && userId) {
-      const params = result?.ResultParameters?.ResultParameter || []
+      const params: Array<{ Key: string; Value: string | number }> = result?.ResultParameters?.ResultParameter || []
 
-      const amountItem = params.find((p: any) => p.Key === 'TransactionAmount')
-      const receiptItem = params.find((p: any) => p.Key === 'TransactionReceipt')
+      const amountItem = params.find((p) => p.Key === 'TransactionAmount')
+      const receiptItem = params.find((p) => p.Key === 'TransactionReceipt')
 
       const amount = amountItem?.Value || 0
       const receipt = receiptItem?.Value || 'Withdrawal'

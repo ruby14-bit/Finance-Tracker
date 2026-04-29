@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import TransactionForm from '@/components/TransactionForm'
@@ -7,7 +7,7 @@ import SpendingChart from '@/components/SpendingChart'
 import { Transaction } from '@/types'
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [loading, setLoading] = useState(true)
@@ -17,7 +17,7 @@ export default function Dashboard() {
   const supabase = createClient()
   const router = useRouter()
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
@@ -29,10 +29,10 @@ export default function Dashboard() {
       setTransactions(data || [])
     }
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    let channel: any;
+    let channel: ReturnType<typeof supabase.channel> | undefined;
 
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -64,7 +64,8 @@ export default function Dashboard() {
         supabase.removeChannel(channel)
       }
     }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchTransactions])
 
   // --- FIXED M-PESA SYNC LOGIC ---
   const handleMpesaSync = async () => {
@@ -234,7 +235,7 @@ export default function Dashboard() {
                 <h4 className="text-xl font-bold text-slate-800 leading-tight">
                   Your largest expense this week was <br />
                   <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
-                    "{transactions.filter(t => t.type === 'expense').sort((a,b) => b.amount - a.amount)[0]?.description || 'None'}"
+                    &ldquo;{transactions.filter(t => t.type === 'expense').sort((a,b) => b.amount - a.amount)[0]?.description || 'None'}&rdquo;
                   </span>
                 </h4>
                 <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-pink-400/10 blur-3xl rounded-full"></div>

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Transaction } from '@/types'
 
@@ -16,17 +16,15 @@ export default function TransactionForm({ onSuccess, initialData, onCancelEdit }
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
-  useEffect(() => {
-    if (initialData) {
-      setAmount(initialData.amount.toString())
-      setDescription(initialData.description || '')
-      setType(initialData.type)
-    }
-  }, [initialData])
+  const editAmount = initialData ? initialData.amount.toString() : amount
+  const editDescription = initialData ? (initialData.description || '') : description
+  const editType = initialData ? initialData.type : type
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!amount || !description) return
+    if (!editAmount || !editDescription) return
     setLoading(true)
 
     // 1. Get the current logged-in user
@@ -40,10 +38,10 @@ export default function TransactionForm({ onSuccess, initialData, onCancelEdit }
 
     // 2. Attach the user.id to the payload to satisfy Supabase RLS policies
     const payload = {
-      amount: parseFloat(amount),
-      description,
-      category: 'General', 
-      type,
+      amount: parseFloat(editAmount),
+      description: editDescription,
+      category: 'General', date: new Date().toISOString().split('T')[0], 
+      type: editType,
       user_id: user.id // <--- THIS FIXES THE RLS VIOLATION
     }
 

@@ -18,11 +18,11 @@ export async function POST(request: Request) {
     const resultCode = data?.Body?.stkCallback?.ResultCode
 
     if (resultCode === 0 && userId) {
-      const callbackMetadata = data.Body.stkCallback.CallbackMetadata.Item
+      const callbackMetadata: Array<{ Name: string; Value: string | number }> = data.Body.stkCallback.CallbackMetadata.Item
       
       // Extract specific details from the Safaricom payload
-      const amountItem = callbackMetadata.find((item: any) => item.Name === 'Amount')
-      const receiptItem = callbackMetadata.find((item: any) => item.Name === 'MpesaReceiptNumber')
+      const amountItem = callbackMetadata.find((item) => item.Name === 'Amount')
+      const receiptItem = callbackMetadata.find((item) => item.Name === 'MpesaReceiptNumber')
 
       const amount = amountItem?.Value || 0
       const receipt = receiptItem?.Value || 'M-Pesa'
