@@ -31,7 +31,7 @@ export default function SpendingChart({ transactions }: SpendingChartProps) {
         Expense Breakdown
       </p>
       
-      <div className="w-full h-[250px] relative">
+      <div className="w-full h-[250px] relative" style={{ minHeight: 250, minWidth: 0 }}>
         {expenses.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <p className="text-slate-400 font-medium italic text-sm">No expenses yet</p>
