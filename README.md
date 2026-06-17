@@ -1,27 +1,21 @@
 # Finance Tracker
-> A real-time personal finance tracker for Kenya, with live M-Pesa deposits and withdrawals built directly into the app.
 
-Finance Tracker lets a user see their actual M-Pesa transactions update live on a dashboard, without manually entering anything. A payment prompt goes to the user's phone, they enter their PIN, and the transaction appears on screen within seconds via Supabase's realtime layer.
+> A real-time personal finance tracker for Kenya, built around manual income and expense logging, with M-Pesa integration in progress.
 
-## What it does
+Finance Tracker lets a user log their income and expenses manually, then instantly see their spending broken down by category on a live dashboard. The M-Pesa side of the project (automatic deposits and withdrawals) exists in the codebase but isn't wired up to real Safaricom credentials yet, that part is still in progress.
 
-- **Live M-Pesa deposits.** Trigger an STK push (the PIN prompt you get on your phone) directly from the app.
-- **Live M-Pesa withdrawals.** Send money from the app back to a phone number using Safaricom's B2C API.
-- **Real-time dashboard.** Transactions appear instantly with no page refresh, powered by Supabase Realtime.
-- **Manual transaction entry.** Add, edit, or delete transactions that didn't come through M-Pesa.
-- **Spending breakdown.** A pie chart showing where money is actually going by category.
+## What it does today
+
+- **Manual transaction entry.** Add, edit, or delete income and expense entries.
+- **Automatic calculation.** Totals and balances update instantly as soon as a transaction is entered, no manual math.
+- **Spending breakdown.** A pie chart showing where money is actually going, by category.
+- **Real-time dashboard.** Powered by Supabase Realtime, so changes reflect instantly without a page refresh.
 - **Authentication.** Secure login and signup via Supabase Auth, with Row Level Security so each user only sees their own data.
 
-## How the M-Pesa flow works
+## What's planned but not working yet
 
-1. User clicks "Sync Live M-Pesa" on the dashboard.
-2. An STK push is sent to their phone (the Safaricom PIN prompt).
-3. User enters their M-Pesa PIN.
-4. Safaricom calls back to `/api/mpesa/callback` with the result.
-5. The transaction is saved to Supabase.
-6. The realtime listener updates the UI instantly, with no refresh needed.
-
-Withdrawals follow the same pattern using Safaricom's B2C API instead.
+- **Live M-Pesa deposits and withdrawals.** API route files for STK push and B2C transfers already exist in the codebase (`/api/mpesa/push`, `/api/mpesa/callback`, `/api/mpesa/withdraw`, `/api/mpesa/b2c-result`), but they aren't connected to real Safaricom Daraja credentials yet. Daraja requires business verification and a tested callback URL, which is the next step.
+- Once wired up, the intended flow is: user clicks "Sync Live M-Pesa," an STK push goes to their phone, they enter their PIN, Safaricom calls back with the result, and the transaction saves automatically, no manual entry needed.
 
 ## Tech stack
 
@@ -31,30 +25,30 @@ Withdrawals follow the same pattern using Safaricom's B2C API instead.
 | Database | Supabase (Postgres) | Realtime subscriptions meant transactions could appear live without building a websocket layer myself |
 | Auth | Supabase Auth | Built-in login/signup with Row Level Security, so each user's data stays isolated |
 | Charts | Recharts | Spending breakdown visualization |
-| Payments | Safaricom M-Pesa Daraja API | Real STK push and B2C transfers, the actual payment rails used in Kenya |
-| Secondary backend | Python (FastAPI) | A separate service for handling parts of the M-Pesa integration logic outside the main Next.js app |
-| Local tunneling | ngrok | Required during development so Safaricom's servers can reach a local callback URL |
+| Payments (in progress) | Safaricom M-Pesa Daraja API | Planned for automatic deposit/withdrawal tracking, not yet connected |
+| Secondary backend | Python (FastAPI) | A separate service intended to handle part of the M-Pesa integration logic outside the main Next.js app |
+| Local tunneling | ngrok | Needed during development so Safaricom's servers could reach a local callback URL, once that integration is live |
 
 ## Project structure
 
 ```
 src/
 ├── app/
-│   ├── api/mpesa/
-│   │   ├── push/route.ts          # Initiates the STK push
-│   │   ├── callback/route.ts      # Receives the deposit result from Safaricom
-│   │   ├── withdraw/route.ts      # Initiates a B2C withdrawal
-│   │   └── b2c-result/route.ts    # Receives the withdrawal result
+│   ├── api/mpesa/                 # M-Pesa routes (not yet connected to live credentials)
+│   │   ├── push/route.ts
+│   │   ├── callback/route.ts
+│   │   ├── withdraw/route.ts
+│   │   └── b2c-result/route.ts
 │   ├── login/page.tsx
 │   └── page.tsx                   # Main dashboard
 ├── components/
-│   ├── TransactionForm.tsx
+│   ├── TransactionForm.tsx        # Manual entry form, the part that actually works today
 │   └── SpendingChart.tsx
 ├── lib/supabase.ts
 └── types/index.ts
 
 mpesa-backend/
-└── main.py                        # FastAPI service handling part of the Daraja integration
+└── main.py                        # FastAPI service, not yet connected to live Daraja credentials
 ```
 
 ## Getting started
@@ -73,6 +67,11 @@ Create a `.env.local` file:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+```
+
+The M-Pesa-related variables below are scaffolded in the code but not required to run the app today, since that integration isn't live yet:
+
+```
 MPESA_CONSUMER_KEY=
 MPESA_CONSUMER_SECRET=
 MPESA_SHORTCODE=
@@ -86,16 +85,6 @@ NEXT_PUBLIC_NGROK_URL=
 
 Create a `transactions` table, enable Realtime on it, and enable Row Level Security so each user can only access their own rows.
 
-### Local M-Pesa testing
-
-Safaricom needs a public URL to send callbacks to, so during development:
-
-```bash
-ngrok http 3000
-```
-
-Copy the HTTPS URL it gives you into `NEXT_PUBLIC_NGROK_URL`.
-
 ### Run it
 
 ```bash
@@ -107,13 +96,13 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Security notes
 
 - `.env.local` is already in `.gitignore` and should never be committed.
-- `SUPABASE_SERVICE_ROLE_KEY` is only ever used server-side, inside API routes, never exposed to the browser.
+- `SUPABASE_SERVICE_ROLE_KEY` is only ever used server-side, never exposed to the browser.
 - Row Level Security at the database level means even if the frontend had a bug, users still couldn't read each other's data.
 
 ## What I'd improve next
 
-- **Move all M-Pesa logic into the Next.js API routes.** Right now the integration is split across a Next.js app and a separate Python FastAPI service, which adds deployment complexity. Consolidating would simplify hosting.
-- **Replace ngrok with a permanent webhook URL** once deployed, since ngrok is only meant for local development.
+- **Finish the M-Pesa integration.** This means completing Safaricom Daraja business verification, wiring up real credentials, and testing the STK push and callback flow end-to-end.
+- **Consolidate the backend.** Right now the M-Pesa scaffolding is split across a Next.js app and a separate Python FastAPI service. Once the integration is live, deciding on one backend would simplify deployment.
 - **Add budget goals and alerts**, not just historical spending breakdown.
 
 ---
