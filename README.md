@@ -1,130 +1,122 @@
-# 💜 Wallet Glow
+# Finance Tracker
 
-> A beautiful, real-time personal finance tracker with M-Pesa integration — built for Kenya.
+> A real-time personal finance tracker for Kenya, with live M-Pesa deposits and withdrawals built directly into the app.
 
-## ✨ Features
+Finance Tracker lets a user see their actual M-Pesa transactions update live on a dashboard, without manually entering anything. A payment prompt goes to the user's phone, they enter their PIN, and the transaction appears on screen within seconds via Supabase's realtime layer.
 
-- **Real-time dashboard** — transactions update instantly via Supabase Realtime
-- **M-Pesa STK Push** — trigger a payment prompt directly to your phone
-- **M-Pesa B2C Withdrawal** — send money from the app back to your phone
-- **Add / Edit / Delete** transactions manually
-- **Spending breakdown chart** — visual pie chart of expenses by category
-- **Largest expense insight** — instantly see where your money goes
-- **Auth system** — secure login and sign-up via Supabase Auth
-- **Glassmorphism UI** — modern, feminine design with smooth animations
+## What it does
 
----
+- **Live M-Pesa deposits.** Trigger an STK push (the PIN prompt you get on your phone) directly from the app.
+- **Live M-Pesa withdrawals.** Send money from the app back to a phone number using Safaricom's B2C API.
+- **Real-time dashboard.** Transactions appear instantly with no page refresh, powered by Supabase Realtime.
+- **Manual transaction entry.** Add, edit, or delete transactions that didn't come through M-Pesa.
+- **Spending breakdown.** A pie chart showing where money is actually going by category.
+- **Authentication.** Secure login and signup via Supabase Auth, with Row Level Security so each user only sees their own data.
 
-## 🛠 Tech Stack
+## How the M-Pesa flow works
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript 5 |
-| Styling | Tailwind CSS v4 |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
-| Realtime | Supabase Realtime |
-| Charts | Recharts |
-| Payments | Safaricom M-Pesa Daraja API |
-| Tunnel | ngrok (for M-Pesa callbacks) |
+1. User clicks "Sync Live M-Pesa" on the dashboard.
+2. An STK push is sent to their phone (the Safaricom PIN prompt).
+3. User enters their M-Pesa PIN.
+4. Safaricom calls back to `/api/mpesa/callback` with the result.
+5. The transaction is saved to Supabase.
+6. The realtime listener updates the UI instantly, with no refresh needed.
 
----
+Withdrawals follow the same pattern using Safaricom's B2C API instead.
 
-## 🚀 Getting Started
+## Tech stack
 
-### 1. Clone the repo
+| Layer | Choice | Why |
+|---|---|---|
+| Frontend | Next.js 16 + React 19 | App Router for the dashboard and auth pages |
+| Database | Supabase (Postgres) | Realtime subscriptions meant transactions could appear live without building a websocket layer myself |
+| Auth | Supabase Auth | Built-in login/signup with Row Level Security, so each user's data stays isolated |
+| Charts | Recharts | Spending breakdown visualization |
+| Payments | Safaricom M-Pesa Daraja API | Real STK push and B2C transfers, the actual payment rails used in Kenya |
+| Secondary backend | Python (FastAPI) | A separate service for handling parts of the M-Pesa integration logic outside the main Next.js app |
+| Local tunneling | ngrok | Required during development so Safaricom's servers can reach a local callback URL |
 
-    git clone https://github.com/YOUR_USERNAME/Cashmere.git
-    cd Cashmere
-    npm install
+## Project structure
 
-### 2. Set up environment variables
+```
+src/
+├── app/
+│   ├── api/mpesa/
+│   │   ├── push/route.ts          # Initiates the STK push
+│   │   ├── callback/route.ts      # Receives the deposit result from Safaricom
+│   │   ├── withdraw/route.ts      # Initiates a B2C withdrawal
+│   │   └── b2c-result/route.ts    # Receives the withdrawal result
+│   ├── login/page.tsx
+│   └── page.tsx                   # Main dashboard
+├── components/
+│   ├── TransactionForm.tsx
+│   └── SpendingChart.tsx
+├── lib/supabase.ts
+└── types/index.ts
 
-Create a .env.local file in the root:
+mpesa-backend/
+└── main.py                        # FastAPI service handling part of the Daraja integration
+```
 
-    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-    MPESA_CONSUMER_KEY=your_consumer_key
-    MPESA_CONSUMER_SECRET=your_consumer_secret
-    MPESA_SHORTCODE=your_shortcode
-    MPESA_PASSKEY=your_passkey
-    MPESA_INITIATOR_NAME=your_initiator_name
-    MPESA_INITIATOR_PASSWORD=your_initiator_password
-    NEXT_PUBLIC_NGROK_URL=https://your-ngrok-url.ngrok-free.app
+## Getting started
 
-### 3. Set up Supabase
+```bash
+git clone https://github.com/<your-username>/Finance-Tracker.git
+cd Finance-Tracker
+npm install
+```
 
-Create a transactions table in your Supabase project and enable Realtime on it. Enable Row Level Security so users only access their own data.
+### Environment variables
 
-### 4. Start ngrok
+Create a `.env.local` file:
 
-    ngrok http 3000
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+MPESA_CONSUMER_KEY=
+MPESA_CONSUMER_SECRET=
+MPESA_SHORTCODE=
+MPESA_PASSKEY=
+MPESA_INITIATOR_NAME=
+MPESA_INITIATOR_PASSWORD=
+NEXT_PUBLIC_NGROK_URL=
+```
 
-Copy the HTTPS URL and set it as NEXT_PUBLIC_NGROK_URL in .env.local.
+### Supabase setup
 
-### 5. Run the app
+Create a `transactions` table, enable Realtime on it, and enable Row Level Security so each user can only access their own rows.
 
-    npm run dev
+### Local M-Pesa testing
 
-Open http://localhost:3000
+Safaricom needs a public URL to send callbacks to, so during development:
 
----
+```bash
+ngrok http 3000
+```
 
-## 📁 Project Structure
+Copy the HTTPS URL it gives you into `NEXT_PUBLIC_NGROK_URL`.
 
-    src/
-    app/
-        api/mpesa/
-            push/route.ts        - STK Push
-            callback/route.ts    - M-Pesa deposit callback
-            withdraw/route.ts    - B2C withdrawal
-            b2c-result/route.ts  - B2C result callback
-        login/page.tsx           - Auth page
-        page.tsx                 - Main dashboard
-        layout.tsx               - Root layout
-    components/
-        TransactionForm.tsx      - Add/edit form
-        SpendingChart.tsx        - Pie chart
-    lib/supabase.ts              - Supabase client
-    types/index.ts               - TypeScript types
+### Run it
 
----
+```bash
+npm run dev
+```
 
-## 💳 M-Pesa Flow
+Open [http://localhost:3000](http://localhost:3000).
 
-    User clicks Sync Live M-Pesa
-        ↓
-    STK Push sent to phone
-        ↓
-    User enters PIN
-        ↓
-    Safaricom hits /api/mpesa/callback
-        ↓
-    Transaction saved to Supabase
-        ↓
-    Realtime listener updates UI instantly ✨
+## Security notes
 
-Withdrawal flow mirrors this using the B2C API.
+- `.env.local` is already in `.gitignore` and should never be committed.
+- `SUPABASE_SERVICE_ROLE_KEY` is only ever used server-side, inside API routes, never exposed to the browser.
+- Row Level Security at the database level means even if the frontend had a bug, users still couldn't read each other's data.
 
----
+## What I'd improve next
 
-## 🔐 Security Notes
-
-- Never commit your .env.local — it is already in .gitignore
-- SUPABASE_SERVICE_ROLE_KEY is only used server-side in API routes
-- Row Level Security ensures users only access their own data
-
----
-
-## 🙏 Acknowledgements
-
-- Safaricom Daraja API: https://developer.safaricom.co.ke
-- Supabase: https://supabase.com
-- Recharts: https://recharts.org
-- Tailwind CSS: https://tailwindcss.com
+- **Move all M-Pesa logic into the Next.js API routes.** Right now the integration is split across a Next.js app and a separate Python FastAPI service, which adds deployment complexity. Consolidating would simplify hosting.
+- **Replace ngrok with a permanent webhook URL** once deployed, since ngrok is only meant for local development.
+- **Add budget goals and alerts**, not just historical spending breakdown.
 
 ---
 
-Built with 💜 in Nairobi
+Built by Ruby Kituli
