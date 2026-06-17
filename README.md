@@ -1,5 +1,4 @@
 # Finance Tracker
-
 > A real-time personal finance tracker for Kenya, with live M-Pesa deposits and withdrawals built directly into the app.
 
 Finance Tracker lets a user see their actual M-Pesa transactions update live on a dashboard, without manually entering anything. A payment prompt goes to the user's phone, they enter their PIN, and the transaction appears on screen within seconds via Supabase's realtime layer.
